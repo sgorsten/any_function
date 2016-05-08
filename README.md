@@ -18,7 +18,7 @@ Once constructed, `any_function` can be called by passing it an array of void po
 
 # TODO
 
-- [*] Retain reference/const/volatile qualification in parameter and return type metadata
+- [X] Retain reference/const/volatile qualification in parameter and return type metadata
 - [ ] L-value reference parameters (should work, but needs testing)
 - [ ] R-value reference parameters
 - [ ] Const/volatile qualified parameters
