@@ -53,18 +53,32 @@
 
 struct any_function
 {
+public:
+    struct type 
+    { 
+        const std::type_info * info; bool is_lvalue_reference, is_rvalue_reference, is_const, is_volatile; 
+        bool operator == (const type & r) const { return info==r.info && is_lvalue_reference==r.is_lvalue_reference && is_rvalue_reference==r.is_rvalue_reference && is_const==r.is_const && is_volatile==r.is_volatile; }
+        bool operator != (const type & r) const { return !(*this == r); }
+    };
+    template<class T> static type capture_type() 
+    { 
+        return {&typeid(T), std::is_lvalue_reference<T>::value, std::is_rvalue_reference<T>::value, 
+            std::is_const<typename std::remove_reference<T>::type>::value, 
+            std::is_volatile<typename std::remove_reference<T>::type>::value}; 
+    }
+
     template<std::size_t... IS> struct                      indices                 {};
     template<std::size_t N, std::size_t... IS> struct       build_indices           : build_indices<N-1, N-1, IS...> {};
     template<std::size_t... IS> struct                      build_indices<0, IS...> : indices<IS...> {};
 
     std::function<std::shared_ptr<void>(void * const *)>    func;
-    std::vector<const std::type_info *>                     parameter_types;
-    const std::type_info *                                  return_type = nullptr;
+    std::vector<type>                                       parameter_types;
+    type                                                    return_type {};
 
-    template<class F, class R                         >     any_function(F f, R    *, std::tuple<    > *, indices<    >) : parameter_types({             }), return_type(&typeid(R   )) { func = [f](void * const args[]) { return std::make_shared<R>(f(                                                                        ));                }; }
-    template<class F                                  >     any_function(F f, void *, std::tuple<    > *, indices<    >) : parameter_types({             }), return_type(&typeid(void)) { func = [f](void * const args[]) {                            f(                                                                        ); return nullptr; }; }
-    template<class F, class R, class... A, size_t... I>     any_function(F f, R    *, std::tuple<A...> *, indices<I...>) : parameter_types({&typeid(A)...}), return_type(&typeid(R   )) { func = [f](void * const args[]) { return std::make_shared<R>(f(*reinterpret_cast<typename std::remove_reference<A>::type *>(args[I])...));                }; }
-    template<class F,          class... A, size_t... I>     any_function(F f, void *, std::tuple<A...> *, indices<I...>) : parameter_types({&typeid(A)...}), return_type(&typeid(void)) { func = [f](void * const args[]) {                            f(*reinterpret_cast<typename std::remove_reference<A>::type *>(args[I])...); return nullptr; }; }
+    template<class F, class R                         >     any_function(F f, R    *, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<R   >()) { func = [f](void * const args[]) { return std::make_shared<R>(f(                                                                        ));                }; }
+    template<class F                                  >     any_function(F f, void *, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<void>()) { func = [f](void * const args[]) {                            f(                                                                        ); return nullptr; }; }
+    template<class F, class R, class... A, size_t... I>     any_function(F f, R    *, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<R   >()) { func = [f](void * const args[]) { return std::make_shared<R>(f(*reinterpret_cast<typename std::remove_reference<A>::type *>(args[I])...));                }; }
+    template<class F,          class... A, size_t... I>     any_function(F f, void *, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<void>()) { func = [f](void * const args[]) {                            f(*reinterpret_cast<typename std::remove_reference<A>::type *>(args[I])...); return nullptr; }; }
     template<class F, class R, class... A             >     any_function(F f, R (F::*p)(A...) const)                     : any_function(f, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {}
 public:
                                                             any_function()                                      {}
@@ -74,8 +88,8 @@ public:
     template<class F>                                       any_function(F f)                                   : any_function(f, &F::operator()) {}   
 
     explicit                                                operator bool() const                               { return static_cast<bool>(func); }
-    const std::vector<const std::type_info *> &             get_parameter_types() const                         { return parameter_types; }
-    const std::type_info *                                  get_return_type() const                             { return return_type; }
+    const std::vector<type> &                               get_parameter_types() const                         { return parameter_types; }
+    const type &                                            get_return_type() const                             { return return_type; }
     std::shared_ptr<void>                                   invoke(void * const args[]) const                   { return func(args); }
 
     std::shared_ptr<void>                                   invoke(std::initializer_list<void *> args) const    { return func(args.begin()); }
