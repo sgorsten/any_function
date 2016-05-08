@@ -197,7 +197,7 @@ TEST_CASE( "any_function is callable with l-value references" )
     REQUIRE( f.get_parameter_types()[0] == any_function::capture_type<double &>() );
     REQUIRE( f.get_return_type() == any_function::capture_type<void>() );
 
-    double x = 0;
+    double x {0};
     REQUIRE( x == 0 );
     
     auto r = f.invoke({&x});
@@ -219,4 +219,28 @@ TEST_CASE( "any_function is callable with r-value references" )
     REQUIRE( x.size() == 0 ); // x should have been moved-from by f
     REQUIRE( r != nullptr );
     REQUIRE( reinterpret_cast<std::vector<double> *>(r.get())->size() == 10 );
+}
+
+TEST_CASE( "any_function can return l-value references" )
+{
+    double x {};
+    const any_function f {[&x]() -> double & { return x; }};
+    REQUIRE( f.get_parameter_types().size() == 0 );
+    REQUIRE( f.get_return_type() == any_function::capture_type<double &>() );
+        
+    auto r = f.invoke({});
+    REQUIRE( r != nullptr );
+    REQUIRE( reinterpret_cast<double *>(r.get()) == &x );    
+}
+
+TEST_CASE( "any_function can return r-value references" )
+{
+    double x {};
+    const any_function f {[&x]() -> double && { return std::move(x); }};
+    REQUIRE( f.get_parameter_types().size() == 0 );
+    REQUIRE( f.get_return_type() == any_function::capture_type<double &&>() );
+        
+    auto r = f.invoke({});
+    REQUIRE( r != nullptr );
+    REQUIRE( reinterpret_cast<double *>(r.get()) == &x );    
 }
