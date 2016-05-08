@@ -39,3 +39,45 @@ TEST_CASE( "any_function is callable with a global function" )
     REQUIRE( r != nullptr );
     REQUIRE( *reinterpret_cast<double *>(r.get()) == a*b+c );
 }
+
+TEST_CASE( "any_function can be constructed with a stateless lambda" )
+{
+    const any_function f {[](int a, double b, float c) { return a*b+c; }};
+    REQUIRE( f );
+    REQUIRE( f.get_parameter_types().size() == 3 );
+    REQUIRE( f.get_parameter_types()[0] == &typeid(int) );
+    REQUIRE( f.get_parameter_types()[1] == &typeid(double) );
+    REQUIRE( f.get_parameter_types()[2] == &typeid(float) );
+    REQUIRE( f.get_return_type() == &typeid(double) );
+}
+
+TEST_CASE( "any_function is callable with a stateless lambda" )
+{
+    const any_function f {[](int a, double b, float c) { return a*b+c; }};
+    int a = 5; double b = 12.2; float c = 3.14f;
+    auto r = f.invoke({&a,&b,&c});
+    REQUIRE( r != nullptr );
+    REQUIRE( *reinterpret_cast<double *>(r.get()) == a*b+c );
+}
+
+TEST_CASE( "any_function can be constructed with a std::function" )
+{
+    std::function<double(int,double,float)> sf {[](int a, double b, float c) { return a*b+c; }};
+    const any_function f {sf};
+    REQUIRE( f );
+    REQUIRE( f.get_parameter_types().size() == 3 );
+    REQUIRE( f.get_parameter_types()[0] == &typeid(int) );
+    REQUIRE( f.get_parameter_types()[1] == &typeid(double) );
+    REQUIRE( f.get_parameter_types()[2] == &typeid(float) );
+    REQUIRE( f.get_return_type() == &typeid(double) );
+}
+
+TEST_CASE( "any_function is callable with a std::function" )
+{
+    std::function<double(int,double,float)> sf {[](int a, double b, float c) { return a*b+c; }};
+    const any_function f {sf};
+    int a = 5; double b = 12.2; float c = 3.14f;
+    auto r = f.invoke({&a,&b,&c});
+    REQUIRE( r != nullptr );
+    REQUIRE( *reinterpret_cast<double *>(r.get()) == a*b+c );
+}
