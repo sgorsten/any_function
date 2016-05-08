@@ -65,16 +65,18 @@ struct any_function
     template<class F,          class... A, size_t... I>     any_function(F f, void *, std::tuple<A...> *, indices<I...>) : parameter_types({&typeid(A)...}), return_type(&typeid(void)) { func = [f](void * const args[]) {                            f(*reinterpret_cast<typename std::remove_reference<A>::type *>(args[I])...); return nullptr; }; }
     template<class F, class R, class... A>                  any_function(F f, R (F::*p)(A...) const)                     : any_function(f, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {}
 public:
-                                                            any_function()                          {}
-                                                            any_function(std::nullptr_t)            {}
-    template<class R, class... A>                           any_function(R (*p)(A...))              : any_function(p, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {} 
-    template<class R, class... A>                           any_function(std::function<R(A...)> f)  : any_function(f, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {} 
-    template<class F>                                       any_function(F f)                       : any_function(f, &F::operator()) {}   
+                                                            any_function()                                      {}
+                                                            any_function(std::nullptr_t)                        {}
+    template<class R, class... A>                           any_function(R (*p)(A...))                          : any_function(p, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {} 
+    template<class R, class... A>                           any_function(std::function<R(A...)> f)              : any_function(f, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {} 
+    template<class F>                                       any_function(F f)                                   : any_function(f, &F::operator()) {}   
 
-    explicit                                                operator bool() const                   { return static_cast<bool>(func); }
-    const std::vector<const std::type_info *> &             get_parameter_types() const             { return parameter_types; }
-    const std::type_info *                                  get_return_type() const                 { return return_type; }
-    std::shared_ptr<void>                                   invoke(void * const args[]) const       { return func(args); }
+    explicit                                                operator bool() const                               { return static_cast<bool>(func); }
+    const std::vector<const std::type_info *> &             get_parameter_types() const                         { return parameter_types; }
+    const std::type_info *                                  get_return_type() const                             { return return_type; }
+    std::shared_ptr<void>                                   invoke(void * const args[]) const                   { return func(args); }
+
+    std::shared_ptr<void>                                   invoke(std::initializer_list<void *> args) const    { return func(args.begin()); }
 };
 
 #endif
