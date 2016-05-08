@@ -7,7 +7,7 @@
 
 Platform | Build Status |
 -------- | ------------ |
-Visual Studio 2013 | [AppVeyor](http://ci.appveyor.com/): [![Build status](http://ci.appveyor.com/api/projects/status/_________________?svg=true)](https://ci.appveyor.com/project/sgorsten/any_function) |
+Visual Studio 2013 | [AppVeyor](http://ci.appveyor.com/): [![Build status](https://ci.appveyor.com/api/projects/status/t9hynmje3af3t0eg?svg=true)](https://ci.appveyor.com/project/sgorsten/any-function) |
 GCC 4.9 | [Travis CI](http://travis-ci.org): [![Build status](http://travis-ci.org/sgorsten/any_function.svg?branch=master)](https://travis-ci.org/sgorsten/any_function) |
 
 [any_function.h](/any_function.h) is a [single header](http://github.com/nothings/stb/blob/master/docs/other_libs.md) [public domain](http://unlicense.org/) utility library for [C++11](http://en.cppreference.com/w/). 
