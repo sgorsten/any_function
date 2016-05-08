@@ -61,9 +61,11 @@ struct any_function
     std::vector<const std::type_info *>                     parameter_types;
     const std::type_info *                                  return_type = nullptr;
 
+    template<class F, class R                         >     any_function(F f, R    *, std::tuple<    > *, indices<    >) : parameter_types({             }), return_type(&typeid(R   )) { func = [f](void * const args[]) { return std::make_shared<R>(f(                                                                        ));                }; }
+    template<class F                                  >     any_function(F f, void *, std::tuple<    > *, indices<    >) : parameter_types({             }), return_type(&typeid(void)) { func = [f](void * const args[]) {                            f(                                                                        ); return nullptr; }; }
     template<class F, class R, class... A, size_t... I>     any_function(F f, R    *, std::tuple<A...> *, indices<I...>) : parameter_types({&typeid(A)...}), return_type(&typeid(R   )) { func = [f](void * const args[]) { return std::make_shared<R>(f(*reinterpret_cast<typename std::remove_reference<A>::type *>(args[I])...));                }; }
     template<class F,          class... A, size_t... I>     any_function(F f, void *, std::tuple<A...> *, indices<I...>) : parameter_types({&typeid(A)...}), return_type(&typeid(void)) { func = [f](void * const args[]) {                            f(*reinterpret_cast<typename std::remove_reference<A>::type *>(args[I])...); return nullptr; }; }
-    template<class F, class R, class... A>                  any_function(F f, R (F::*p)(A...) const)                     : any_function(f, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {}
+    template<class F, class R, class... A             >     any_function(F f, R (F::*p)(A...) const)                     : any_function(f, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {}
 public:
                                                             any_function()                                      {}
                                                             any_function(std::nullptr_t)                        {}

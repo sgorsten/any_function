@@ -62,13 +62,13 @@ TEST_CASE( "any_function is callable with a std::function" )
     REQUIRE( *reinterpret_cast<double *>(r.get()) == a*b+c );
 }
 
-/*TEST_CASE( "any_function can be constructed with an arity-0 stateless lambda" )
+TEST_CASE( "any_function can be constructed with an arity-0 stateless lambda" )
 {
     const any_function f {[]() { return 5.0; }};
     REQUIRE( f );
     REQUIRE( f.get_parameter_types().size() == 0 );
     REQUIRE( f.get_return_type() == &typeid(double) );
-}*/
+}
 
 TEST_CASE( "any_function can be constructed with an arity-1 stateless lambda" )
 {
