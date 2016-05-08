@@ -1,0 +1,13 @@
+# appveyor file
+# http://www.appveyor.com/docs/appveyor-yml
+
+os: Visual Studio 2013
+
+configuration: Debug
+
+build:
+  verbosity: minimal
+  project: samples/msvc120/any_function-msvc120.sln
+  
+test_script:
+  - samples\msvc120\bin\any_function-test-Debug-Win32.exe
