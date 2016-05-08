@@ -66,7 +66,8 @@ public:
             std::is_const<typename std::remove_reference<T>::type>::value, 
             std::is_volatile<typename std::remove_reference<T>::type>::value}; 
     }
-
+public:
+    template<class T> struct                                tag {};
     template<std::size_t... IS> struct                      indices                 {};
     template<std::size_t N, std::size_t... IS> struct       build_indices           : build_indices<N-1, N-1, IS...> {};
     template<std::size_t... IS> struct                      build_indices<0, IS...> : indices<IS...> {};
@@ -74,11 +75,14 @@ public:
     std::function<std::shared_ptr<void>(void * const *)>    func;
     std::vector<type>                                       parameter_types;
     type                                                    return_type {};
-
-    template<class F, class R                         >     any_function(F f, R    *, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<R   >()) { func = [f](void * const args[]) { return std::make_shared<R>(f(                                                                        ));                }; }
-    template<class F                                  >     any_function(F f, void *, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<void>()) { func = [f](void * const args[]) {                            f(                                                                        ) ; return nullptr; }; }
-    template<class F, class R, class... A, size_t... I>     any_function(F f, R    *, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<R   >()) { func = [f](void * const args[]) { return std::make_shared<R>(f(*reinterpret_cast<typename std::remove_reference<A>::type *>(args[I])...));                }; }
-    template<class F,          class... A, size_t... I>     any_function(F f, void *, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<void>()) { func = [f](void * const args[]) {                            f(*reinterpret_cast<typename std::remove_reference<A>::type *>(args[I])...) ; return nullptr; }; }
+   
+    template<class T> static T                              get(void * arg, tag<T>   ) { return *reinterpret_cast<T *>(arg); }
+    template<class T> static T &                            get(void * arg, tag<T &> ) { return *reinterpret_cast<T *>(arg); }
+    template<class T> static T &&                           get(void * arg, tag<T &&>) { return std::move(*reinterpret_cast<T *>(arg)); }
+    template<class F, class R, class... A, size_t... I>     any_function(F f, R    *, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<R   >()) { func = [f](void * const args[]) { return std::make_shared<R>(f(get(args[I], tag<A>{})...));                 }; }
+    template<class F,          class... A, size_t... I>     any_function(F f, void *, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<void>()) { func = [f](void * const args[]) {                            f(get(args[I], tag<A>{})...) ; return nullptr; }; }
+    template<class F, class R                         >     any_function(F f, R    *, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<R   >()) { func = [f](void * const args[]) { return std::make_shared<R>(f(                         ));                 }; }
+    template<class F                                  >     any_function(F f, void *, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<void>()) { func = [f](void * const args[]) {                            f(                         ) ; return nullptr; }; }
     template<class F, class R, class... A             >     any_function(F f, R (F::*p)(A...) const)                     : any_function(f, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {}
 public:
                                                             any_function()                                      {}

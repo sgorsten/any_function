@@ -20,7 +20,7 @@ Once constructed, `any_function` can be called by passing it an array of void po
 
 - [X] Retain reference/const/volatile qualification in parameter and return type metadata
 - [X] L-value reference parameters (should work, but needs testing)
-- [ ] R-value reference parameters
+- [X] R-value reference parameters
 - [ ] Const/volatile qualified parameters
 - [ ] L-value reference return types
 - [ ] R-value reference return types
