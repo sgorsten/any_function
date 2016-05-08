@@ -66,7 +66,7 @@ struct any_function
     template<class F, class R, class... A>                  any_function(F f, R (F::*p)(A...) const)                     : any_function(f, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {}
 public:
                                                             any_function()                          {}
-                                                            any_function(nullptr_t)                 {}
+                                                            any_function(std::nullptr_t)            {}
     template<class R, class... A>                           any_function(R (*p)(A...))              : any_function(p, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {} 
     template<class R, class... A>                           any_function(std::function<R(A...)> f)  : any_function(f, (R*)0, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {} 
     template<class F>                                       any_function(F f)                       : any_function(f, &F::operator()) {}   
