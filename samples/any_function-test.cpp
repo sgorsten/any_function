@@ -185,3 +185,38 @@ TEST_CASE( "any_function is callable with an arity-3 stateless lambda returning 
     auto r = f.invoke({&a,&b,&c});
     REQUIRE( r == nullptr );
 }
+
+//////////////////////////////////////////////////////
+// Test calling functions with qualified parameters //
+//////////////////////////////////////////////////////
+
+TEST_CASE( "any_function is callable with l-value references" )
+{
+    const any_function f {[](double & x) { x=5; }};
+    REQUIRE( f.get_parameter_types().size() == 1 );
+    REQUIRE( f.get_parameter_types()[0] == any_function::capture_type<double &>() );
+    REQUIRE( f.get_return_type() == any_function::capture_type<void>() );
+
+    double x = 0;
+    REQUIRE( x == 0 );
+    
+    auto r = f.invoke({&x});
+    REQUIRE( x == 5 ); // x should have been modified by reference by f
+    REQUIRE( r == nullptr );
+}
+
+// TEST_CASE( "any_function is callable with r-value references" )
+// {
+//     const any_function f {[](std::vector<double> && x) { return std::move(x); }};
+//     REQUIRE( f.get_parameter_types().size() == 1 );
+//     REQUIRE( f.get_parameter_types()[0] == any_function::capture_type<std::vector<double> &&>() );
+//     REQUIRE( f.get_return_type() == any_function::capture_type<std::vector<double>>() );
+// 
+//     std::vector<double> x = {1,2,3,4,5,6,7,8,9,10};
+//     REQUIRE( x.size() == 10 );
+//     
+//     auto r = f.invoke({&x});
+//     REQUIRE( x.size() == 0 ); // x should have been moved-from by f
+//     REQUIRE( r != nullptr );
+//     REQUIRE( reinterpret_cast<std::vector<double> *>(r.get())->size() == 10 );
+// }
