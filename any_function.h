@@ -77,9 +77,17 @@ public:
         template<class T> struct typed_result : result_base
         {
             T                                           x;
-                                                        typed_result(T x)                                       : x(static_cast<T>(x)) {}
-            std::unique_ptr<result_base>                clone() const                                           { return std::unique_ptr<typed_result>(new typed_result(static_cast<T>(x))); }
+                                                        typed_result(T x)                                       : x(x) {}
+            std::unique_ptr<result_base>                clone() const                                           { return std::unique_ptr<typed_result>(new typed_result(x)); }
             type                                        get_type() const                                        { return type::capture<T>(); }
+            void *                                      get_address()                                           { return (void *)&x; }
+        };
+        template<class T> struct typed_result<T &&> : result_base
+        {
+            T &&                                        x;
+                                                        typed_result(T && x)                                    : x(std::move(x)) {}
+            std::unique_ptr<result_base>                clone() const                                           { return std::unique_ptr<typed_result>(new typed_result(std::move(x))); }
+            type                                        get_type() const                                        { return type::capture<T &&>(); }
             void *                                      get_address()                                           { return (void *)&x; }
         };
         std::unique_ptr<result_base>                    p;
