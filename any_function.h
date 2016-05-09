@@ -70,6 +70,7 @@ public:
         struct result_base
         {
             virtual                                     ~result_base()                                          {}
+            virtual std::unique_ptr<result_base>        clone() const                                           = 0;
             virtual type                                get_type() const                                        = 0;
             virtual void *                              get_address()                                           = 0;     
         };
@@ -77,6 +78,7 @@ public:
         {
             T                                           x;
                                                         typed_result(T x)                                       : x(static_cast<T>(x)) {}
+            std::unique_ptr<result_base>                clone() const                                           { return std::unique_ptr<typed_result>(new typed_result(static_cast<T>(x))); }
             type                                        get_type() const                                        { return type::capture<T>(); }
             void *                                      get_address()                                           { return (void *)&x; }
         };
@@ -84,7 +86,9 @@ public:
     public:
                                                         result()                                                {}
                                                         result(result && r)                                     : p(move(r.p)) {}
+                                                        result(const result & r)                                { *this = r; }
         result &                                        operator = (result && r)                                { p.swap(r.p); return *this; }
+        result &                                        operator = (const result & r)                           { p = r.p ? r.p->clone() : nullptr; return *this; }
 
         type                                            get_type() const                                        { return p ? p->get_type() : type::capture<void>(); }
         void *                                          get_address()                                           { return p ? p->get_address() : nullptr; }
