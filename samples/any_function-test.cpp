@@ -300,7 +300,6 @@ TEST_CASE( "any_function can return const values" )
     REQUIRE( r.get_value<const double>() == 5.0 );    
 }
 
-
 TEST_CASE( "any_function can return l-value references" )
 {
     double x {};
@@ -375,4 +374,40 @@ TEST_CASE( "any_function can return const volatile r-value references" )
 
     const volatile double && ref_x = r.get_value<const volatile double &&>();
     REQUIRE( &ref_x == &x );
+}
+
+///////////////////////////////////////////
+// Test calling mutable function objects //
+///////////////////////////////////////////
+
+struct counter { int i=0; int operator()() { return ++i; } };
+TEST_CASE( "any_function can capture mutable function objects" )
+{
+    any_function f {counter()};
+    REQUIRE( f.get_parameter_types().size() == 0 );
+    REQUIRE( f.get_result_type() == any_function::type::capture<int>() );
+
+    auto r = f.invoke({});
+    REQUIRE( r.get_type() == any_function::type::capture<int>() );
+    REQUIRE( r.get_value<int>() == 1 );
+    REQUIRE( f.invoke({}).get_value<int>() == 2 );
+    REQUIRE( f.invoke({}).get_value<int>() == 3 );
+    REQUIRE( f.invoke({}).get_value<int>() == 4 );
+    REQUIRE( f.invoke({}).get_value<int>() == 5 );
+}
+
+TEST_CASE( "any_function can capture mutable lambdas" )
+{
+    int i=0;
+    any_function f {[i]() mutable { return ++i; }};
+    REQUIRE( f.get_parameter_types().size() == 0 );
+    REQUIRE( f.get_result_type() == any_function::type::capture<int>() );
+
+    auto r = f.invoke({});
+    REQUIRE( r.get_type() == any_function::type::capture<int>() );
+    REQUIRE( r.get_value<int>() == 1 );
+    REQUIRE( f.invoke({}).get_value<int>() == 2 );
+    REQUIRE( f.invoke({}).get_value<int>() == 3 );
+    REQUIRE( f.invoke({}).get_value<int>() == 4 );
+    REQUIRE( f.invoke({}).get_value<int>() == 5 );
 }

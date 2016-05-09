@@ -1,8 +1,6 @@
-# WARNING: This library is still under development and its API and implementation details are subject to change.
-
 # any_function.h
 
-[![Release is 0.7](http://img.shields.io/badge/release-0.7-blue.svg?style=flat)](/any_function.h)
+[![Release is 0.8](http://img.shields.io/badge/release-0.8-blue.svg?style=flat)](/any_function.h)
 [![License is Unlicense](http://img.shields.io/badge/license-Unlicense-blue.svg?style=flat)](http://unlicense.org/)
 
 Platform | Build Status |
@@ -14,7 +12,7 @@ GCC 4.9 | [Travis CI](http://travis-ci.org): [![Build status](http://travis-ci.o
 
 It is intended to serve as a functional counterpart to the [`std::any`](http://en.cppreference.com/w/cpp/utility/any), by providing a single, concrete class `any_function` which can receive almost any callable object, from function pointers to lambdas to instantiations of [`std::function`](http://en.cppreference.com/w/cpp/utility/functional/function).
 
-Once constructed, `any_function` can be called by passing it an array of void pointers to the intended arguments. It is the caller's responsibility to ensure that the number and type of arguments match the actual function. An `any_function::result` will be returned, which is a noncopyable type-erased container for any value.
+This library is still under development and its API and implementation details are subject to change.
 
 # TODO
 
@@ -25,5 +23,5 @@ Once constructed, `any_function` can be called by passing it an array of void po
 - [X] R-value reference return types
 - [X] Const/volatile qualified parameters
 - [X] Const/volatile qualified return type
-- [ ] Mutable lambdas / stateful function objects
+- [X] Mutable lambdas / stateful function objects
 
