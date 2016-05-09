@@ -23,7 +23,7 @@ Once constructed, `any_function` can be called by passing it an array of void po
 - [X] R-value reference parameters
 - [X] L-value reference return types
 - [X] R-value reference return types
-- [ ] Const/volatile qualified parameters
-- [ ] Const/volatile qualified return type
+- [X] Const/volatile qualified parameters
+- [X] Const/volatile qualified return type
 - [ ] Mutable lambdas / stateful function objects
 

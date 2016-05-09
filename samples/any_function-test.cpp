@@ -205,6 +205,54 @@ TEST_CASE( "any_function is callable with l-value references" )
     REQUIRE( r.get_type() == any_function::type::capture<void>() );
 }
 
+TEST_CASE( "any_function is callable with const l-value references" )
+{
+    static double s {0};
+    REQUIRE( s == 0 );
+
+    const any_function f {[](const double & x) { s=x; }};
+    REQUIRE( f.get_parameter_types().size() == 1 );
+    REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<const double &>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<void>() );
+
+    double x {5};
+    auto r = f.invoke({&x});
+    REQUIRE( s == 5 ); // s should have been modified by f
+    REQUIRE( r.get_type() == any_function::type::capture<void>() );
+}
+
+TEST_CASE( "any_function is callable with volatile l-value references" )
+{
+    static double s {0};
+    REQUIRE( s == 0 );
+
+    const any_function f {[](volatile double & x) { s=x; }};
+    REQUIRE( f.get_parameter_types().size() == 1 );
+    REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<volatile double &>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<void>() );
+
+    double x {5};
+    auto r = f.invoke({&x});
+    REQUIRE( s == 5 ); // s should have been modified by f
+    REQUIRE( r.get_type() == any_function::type::capture<void>() );
+}
+
+TEST_CASE( "any_function is callable with const volatile l-value references" )
+{
+    static double s {0};
+    REQUIRE( s == 0 );
+
+    const any_function f {[](const volatile double & x) { s=x; }};
+    REQUIRE( f.get_parameter_types().size() == 1 );
+    REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<const volatile double &>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<void>() );
+
+    double x {5};
+    auto r = f.invoke({&x});
+    REQUIRE( s == 5 ); // s should have been modified by f
+    REQUIRE( r.get_type() == any_function::type::capture<void>() );
+}
+
 TEST_CASE( "any_function is callable with r-value references" )
 {
     const any_function f {[](std::vector<double> && x) { return std::move(x); }};
@@ -221,6 +269,26 @@ TEST_CASE( "any_function is callable with r-value references" )
     REQUIRE( r.get_value<std::vector<double>>().size() == 10 );
 }
 
+TEST_CASE( "any_function is callable with const volatile r-value references" )
+{
+    static double s {0};
+    REQUIRE( s == 0 );
+
+    const any_function f {[](const volatile double && x) { s=x; }};
+    REQUIRE( f.get_parameter_types().size() == 1 );
+    REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<const volatile double &&>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<void>() );
+
+    double x {5};
+    auto r = f.invoke({&x});
+    REQUIRE( s == 5 ); // s should have been modified by f
+    REQUIRE( r.get_type() == any_function::type::capture<void>() );
+}
+
+/////////////////////////////////////////////////////////
+// Test calling functions with qualified return values //
+/////////////////////////////////////////////////////////
+
 TEST_CASE( "any_function can return l-value references" )
 {
     double x {};
@@ -231,6 +299,42 @@ TEST_CASE( "any_function can return l-value references" )
     auto r = f.invoke({});
     REQUIRE( r.get_type() == any_function::type::capture<double &>() );
     REQUIRE( &r.get_value<double &>() == &x );    
+}
+
+TEST_CASE( "any_function can return const l-value references" )
+{
+    double x {};
+    const any_function f {[&x]() -> const double & { return x; }};
+    REQUIRE( f.get_parameter_types().size() == 0 );
+    REQUIRE( f.get_result_type() == any_function::type::capture<const double &>() );
+        
+    auto r = f.invoke({});
+    REQUIRE( r.get_type() == any_function::type::capture<const double &>() );
+    REQUIRE( &r.get_value<const double &>() == &x );
+}
+
+TEST_CASE( "any_function can return volatile l-value references" )
+{
+    double x {};
+    const any_function f {[&x]() -> volatile double & { return x; }};
+    REQUIRE( f.get_parameter_types().size() == 0 );
+    REQUIRE( f.get_result_type() == any_function::type::capture<volatile double &>() );
+        
+    auto r = f.invoke({});
+    REQUIRE( r.get_type() == any_function::type::capture<volatile double &>() );
+    REQUIRE( &r.get_value<volatile double &>() == &x );
+}
+
+TEST_CASE( "any_function can return const volatile l-value references" )
+{
+    double x {};
+    const any_function f {[&x]() -> const volatile double & { return x; }};
+    REQUIRE( f.get_parameter_types().size() == 0 );
+    REQUIRE( f.get_result_type() == any_function::type::capture<const volatile double &>() );
+        
+    auto r = f.invoke({});
+    REQUIRE( r.get_type() == any_function::type::capture<const volatile double &>() );
+    REQUIRE( &r.get_value<const volatile double &>() == &x );
 }
 
 TEST_CASE( "any_function can return r-value references" )
@@ -247,14 +351,16 @@ TEST_CASE( "any_function can return r-value references" )
     REQUIRE( &ref_x == &x );
 }
 
-TEST_CASE( "any_function can return const l-value references" )
+TEST_CASE( "any_function can return const volatile r-value references" )
 {
     double x {};
-    const any_function f {[&x]() -> const double & { return x; }};
+    const any_function f {[&x]() -> const volatile double && { return std::move(x); }};
     REQUIRE( f.get_parameter_types().size() == 0 );
-    REQUIRE( f.get_result_type() == any_function::type::capture<const double &>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<const volatile double &&>() );
         
     auto r = f.invoke({});
-    REQUIRE( r.get_type() == any_function::type::capture<const double &>() );
-    REQUIRE( &r.get_value<const double &>() == &x );
+    REQUIRE( r.get_type() == any_function::type::capture<const volatile double &&>() );
+
+    const volatile double && ref_x = r.get_value<const volatile double &&>();
+    REQUIRE( &ref_x == &x );
 }

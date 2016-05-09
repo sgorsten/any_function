@@ -47,9 +47,10 @@
 #ifndef ANY_FUNCTION_H
 #define ANY_FUNCTION_H
 
-#include <functional>   // For std::function
-#include <vector>       // For std::vector
-#include <memory>       // For std::shared_ptr
+#include <cassert>      // For assert(...)
+#include <functional>   // For std::function<F>
+#include <vector>       // For std::vector<T>
+#include <memory>       // For std::unique_ptr<T>
 
 struct any_function
 {
@@ -77,7 +78,7 @@ public:
             T                                           x;
                                                         typed_result(T x)                                       : x(static_cast<T>(x)) {}
             type                                        get_type() const                                        { return type::capture<T>(); }
-            void *                                      get_address()                                           { return const_cast<typename std::remove_cv<typename std::remove_reference<T>::type>::type *>(&x); }
+            void *                                      get_address()                                           { return (void *)&x; }
         };
         std::unique_ptr<result_base>                    p;
     public:
@@ -87,7 +88,7 @@ public:
 
         type                                            get_type() const                                        { return p ? p->get_type() : type::capture<void>(); }
         void *                                          get_address()                                           { return p ? p->get_address() : nullptr; }
-        template<class T> T                             get_value()                                             { return get(p->get_address(), tag<T>{}); }
+        template<class T> T                             get_value()                                             { assert(get_type() == type::capture<T>()); return get(p->get_address(), tag<T>{}); }
 
         template<class T> static result                 capture(T x)                                            { result r; r.p.reset(new typed_result<T>(static_cast<T>(x))); return r; }
     };
