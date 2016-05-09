@@ -34,7 +34,7 @@ TEST_CASE( "any_function can default construct" )
     const any_function f;
     REQUIRE( !f );
     REQUIRE( f.get_parameter_types().empty() );
-    REQUIRE( f.get_return_type() == any_function::type{} );
+    REQUIRE( f.get_result_type() == any_function::type{} );
 }
 
 TEST_CASE( "any_function can constructed with nullptr" ) 
@@ -42,7 +42,7 @@ TEST_CASE( "any_function can constructed with nullptr" )
     const any_function f {nullptr};
     REQUIRE( !f );
     REQUIRE( f.get_parameter_types().empty() );
-    REQUIRE( f.get_return_type() == any_function::type{} );
+    REQUIRE( f.get_result_type() == any_function::type{} );
 }
 
 double global_function(int a, double b, float c) { return a*b+c; }
@@ -54,7 +54,7 @@ TEST_CASE( "any_function can be constructed with a global function" )
     REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<int>() );
     REQUIRE( f.get_parameter_types()[1] == any_function::type::capture<double>() );
     REQUIRE( f.get_parameter_types()[2] == any_function::type::capture<float>() );
-    REQUIRE( f.get_return_type() == any_function::type::capture<double>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<double>() );
 }
 
 TEST_CASE( "any_function can be constructed with a std::function" )
@@ -66,7 +66,7 @@ TEST_CASE( "any_function can be constructed with a std::function" )
     REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<int>() );
     REQUIRE( f.get_parameter_types()[1] == any_function::type::capture<double>() );
     REQUIRE( f.get_parameter_types()[2] == any_function::type::capture<float>() );
-    REQUIRE( f.get_return_type() == any_function::type::capture<double>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<double>() );
 }
 
 TEST_CASE( "any_function can be constructed with an arity-0 stateless lambda" )
@@ -74,7 +74,7 @@ TEST_CASE( "any_function can be constructed with an arity-0 stateless lambda" )
     const any_function f {[]() { return 5.0; }};
     REQUIRE( f );
     REQUIRE( f.get_parameter_types().size() == 0 );
-    REQUIRE( f.get_return_type() == any_function::type::capture<double>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<double>() );
 }
 
 TEST_CASE( "any_function can be constructed with an arity-1 stateless lambda" )
@@ -83,7 +83,7 @@ TEST_CASE( "any_function can be constructed with an arity-1 stateless lambda" )
     REQUIRE( f );
     REQUIRE( f.get_parameter_types().size() == 1 );
     REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<int>() );
-    REQUIRE( f.get_return_type() == any_function::type::capture<int>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<int>() );
 }
 
 TEST_CASE( "any_function can be constructed with an arity-2 stateless lambda" )
@@ -93,7 +93,7 @@ TEST_CASE( "any_function can be constructed with an arity-2 stateless lambda" )
     REQUIRE( f.get_parameter_types().size() == 2 );
     REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<int>() );
     REQUIRE( f.get_parameter_types()[1] == any_function::type::capture<double>() );
-    REQUIRE( f.get_return_type() == any_function::type::capture<double>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<double>() );
 }
 
 TEST_CASE( "any_function can be constructed with an arity-3 stateless lambda" )
@@ -104,7 +104,7 @@ TEST_CASE( "any_function can be constructed with an arity-3 stateless lambda" )
     REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<int>() );
     REQUIRE( f.get_parameter_types()[1] == any_function::type::capture<double>() );
     REQUIRE( f.get_parameter_types()[2] == any_function::type::capture<float>() );
-    REQUIRE( f.get_return_type() == any_function::type::capture<double>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<double>() );
 }
 
 TEST_CASE( "any_function can be constructed with an arity-4 stateless lambda" )
@@ -116,7 +116,7 @@ TEST_CASE( "any_function can be constructed with an arity-4 stateless lambda" )
     REQUIRE( f.get_parameter_types()[1] == any_function::type::capture<double>() );
     REQUIRE( f.get_parameter_types()[2] == any_function::type::capture<float>() );
     REQUIRE( f.get_parameter_types()[3] == any_function::type::capture<short>() );
-    REQUIRE( f.get_return_type() == any_function::type::capture<double>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<double>() );
 }
 
 double g;
@@ -128,7 +128,7 @@ TEST_CASE( "any_function can be constructed with an arity-3 stateless lambda ret
     REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<int>() );
     REQUIRE( f.get_parameter_types()[1] == any_function::type::capture<double>() );
     REQUIRE( f.get_parameter_types()[2] == any_function::type::capture<float>() );
-    REQUIRE( f.get_return_type() == any_function::type::capture<void>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<void>() );
 }
 
 ///////////////////////////////////////////////
@@ -195,7 +195,7 @@ TEST_CASE( "any_function is callable with l-value references" )
     const any_function f {[](double & x) { x=5; }};
     REQUIRE( f.get_parameter_types().size() == 1 );
     REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<double &>() );
-    REQUIRE( f.get_return_type() == any_function::type::capture<void>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<void>() );
 
     double x {0};
     REQUIRE( x == 0 );
@@ -210,7 +210,7 @@ TEST_CASE( "any_function is callable with r-value references" )
     const any_function f {[](std::vector<double> && x) { return std::move(x); }};
     REQUIRE( f.get_parameter_types().size() == 1 );
     REQUIRE( f.get_parameter_types()[0] == any_function::type::capture<std::vector<double> &&>() );
-    REQUIRE( f.get_return_type() == any_function::type::capture<std::vector<double>>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<std::vector<double>>() );
 
     std::vector<double> x = {1,2,3,4,5,6,7,8,9,10};
     REQUIRE( x.size() == 10 );
@@ -226,7 +226,7 @@ TEST_CASE( "any_function can return l-value references" )
     double x {};
     const any_function f {[&x]() -> double & { return x; }};
     REQUIRE( f.get_parameter_types().size() == 0 );
-    REQUIRE( f.get_return_type() == any_function::type::capture<double &>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<double &>() );
         
     auto r = f.invoke({});
     REQUIRE( r.get_type() == any_function::type::capture<double &>() );
@@ -238,7 +238,7 @@ TEST_CASE( "any_function can return r-value references" )
     double x {};
     const any_function f {[&x]() -> double && { return std::move(x); }};
     REQUIRE( f.get_parameter_types().size() == 0 );
-    REQUIRE( f.get_return_type() == any_function::type::capture<double &&>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<double &&>() );
         
     auto r = f.invoke({});
     REQUIRE( r.get_type() == any_function::type::capture<double &&>() );
@@ -252,7 +252,7 @@ TEST_CASE( "any_function can return const l-value references" )
     double x {};
     const any_function f {[&x]() -> const double & { return x; }};
     REQUIRE( f.get_parameter_types().size() == 0 );
-    REQUIRE( f.get_return_type() == any_function::type::capture<const double &>() );
+    REQUIRE( f.get_result_type() == any_function::type::capture<const double &>() );
         
     auto r = f.invoke({});
     REQUIRE( r.get_type() == any_function::type::capture<const double &>() );
