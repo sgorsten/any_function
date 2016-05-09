@@ -289,6 +289,18 @@ TEST_CASE( "any_function is callable with const volatile r-value references" )
 // Test calling functions with qualified return values //
 /////////////////////////////////////////////////////////
 
+TEST_CASE( "any_function can return const values" )
+{
+    const any_function f {[]() -> const double { return 5.0; }};
+    REQUIRE( f.get_parameter_types().size() == 0 );
+    REQUIRE( f.get_result_type() == any_function::type::capture<const double>() );
+        
+    auto r = f.invoke({});
+    REQUIRE( r.get_type() == any_function::type::capture<const double>() );
+    REQUIRE( r.get_value<const double>() == 5.0 );    
+}
+
+
 TEST_CASE( "any_function can return l-value references" )
 {
     double x {};
