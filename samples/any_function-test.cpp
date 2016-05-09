@@ -140,8 +140,8 @@ TEST_CASE( "any_function is callable with a global function" )
     const any_function f {&global_function};
     int a = 5; double b = 12.2; float c = 3.14f;
     auto r = f.invoke({&a,&b,&c});
-    REQUIRE( r != nullptr );
-    REQUIRE( *reinterpret_cast<double *>(r.get()) == a*b+c );
+    REQUIRE( r.get_type() == any_function::capture_type<double>() );
+    REQUIRE( r.get_value<double>() == a*b+c );
 }
 
 TEST_CASE( "any_function is callable with a std::function" )
@@ -150,16 +150,16 @@ TEST_CASE( "any_function is callable with a std::function" )
     const any_function f {sf};
     int a = 5; double b = 12.2; float c = 3.14f;
     auto r = f.invoke({&a,&b,&c});
-    REQUIRE( r != nullptr );
-    REQUIRE( *reinterpret_cast<double *>(r.get()) == a*b+c );
+    REQUIRE( r.get_type() == any_function::capture_type<double>() );
+    REQUIRE( r.get_value<double>() == a*b+c );
 }
 
 TEST_CASE( "any_function is callable with an arity-0 stateless lambda" )
 {
     const any_function f {[]() { return 5.0; }};
     auto r = f.invoke({});
-    REQUIRE( r != nullptr );
-    REQUIRE( *reinterpret_cast<double *>(r.get()) == 5.0 );
+    REQUIRE( r.get_type() == any_function::capture_type<double>() );
+    REQUIRE( r.get_value<double>() == 5.0 );
 }
 
 TEST_CASE( "any_function is callable with an arity-3 stateless lambda" )
@@ -167,15 +167,15 @@ TEST_CASE( "any_function is callable with an arity-3 stateless lambda" )
     const any_function f {[](int a, double b, float c) { return a*b+c; }};
     int a = 5; double b = 12.2; float c = 3.14f;
     auto r = f.invoke({&a,&b,&c});
-    REQUIRE( r != nullptr );
-    REQUIRE( *reinterpret_cast<double *>(r.get()) == a*b+c );
+    REQUIRE( r.get_type() == any_function::capture_type<double>() );
+    REQUIRE( r.get_value<double>() == a*b+c );
 }
 
 TEST_CASE( "any_function is callable with an arity-0 stateless lambda returning void" )
 {
     const any_function f {[]() { g=5.0; }};
     auto r = f.invoke({});
-    REQUIRE( r == nullptr );
+    REQUIRE( r.get_type() == any_function::capture_type<void>() );
 }
 
 TEST_CASE( "any_function is callable with an arity-3 stateless lambda returning void" )
@@ -183,7 +183,7 @@ TEST_CASE( "any_function is callable with an arity-3 stateless lambda returning 
     const any_function f {[](int a, double b, float c) { g=a*b+c; }};
     int a = 5; double b = 12.2; float c = 3.14f;
     auto r = f.invoke({&a,&b,&c});
-    REQUIRE( r == nullptr );
+    REQUIRE( r.get_type() == any_function::capture_type<void>() );
 }
 
 //////////////////////////////////////////////////////
@@ -202,7 +202,7 @@ TEST_CASE( "any_function is callable with l-value references" )
     
     auto r = f.invoke({&x});
     REQUIRE( x == 5 ); // x should have been modified by reference by f
-    REQUIRE( r == nullptr );
+    REQUIRE( r.get_type() == any_function::capture_type<void>() );
 }
 
 TEST_CASE( "any_function is callable with r-value references" )
@@ -217,8 +217,8 @@ TEST_CASE( "any_function is callable with r-value references" )
     
     auto r = f.invoke({&x});
     REQUIRE( x.size() == 0 ); // x should have been moved-from by f
-    REQUIRE( r != nullptr );
-    REQUIRE( reinterpret_cast<std::vector<double> *>(r.get())->size() == 10 );
+    REQUIRE( r.get_type() == any_function::capture_type<std::vector<double>>() );
+    REQUIRE( r.get_value<std::vector<double>>().size() == 10 );
 }
 
 TEST_CASE( "any_function can return l-value references" )
@@ -229,8 +229,8 @@ TEST_CASE( "any_function can return l-value references" )
     REQUIRE( f.get_return_type() == any_function::capture_type<double &>() );
         
     auto r = f.invoke({});
-    REQUIRE( r != nullptr );
-    REQUIRE( reinterpret_cast<double *>(r.get()) == &x );    
+    REQUIRE( r.get_type() == any_function::capture_type<double &>() );
+    REQUIRE( &r.get_value<double &>() == &x );    
 }
 
 TEST_CASE( "any_function can return r-value references" )
@@ -241,6 +241,20 @@ TEST_CASE( "any_function can return r-value references" )
     REQUIRE( f.get_return_type() == any_function::capture_type<double &&>() );
         
     auto r = f.invoke({});
-    REQUIRE( r != nullptr );
-    REQUIRE( reinterpret_cast<double *>(r.get()) == &x );    
+    REQUIRE( r.get_type() == any_function::capture_type<double &&>() );
+
+    double && ref_x = r.get_value<double &&>();
+    REQUIRE( &ref_x == &x );
+}
+
+TEST_CASE( "any_function can return const l-value references" )
+{
+    double x {};
+    const any_function f {[&x]() -> const double & { return x; }};
+    REQUIRE( f.get_parameter_types().size() == 0 );
+    REQUIRE( f.get_return_type() == any_function::capture_type<const double &>() );
+        
+    auto r = f.invoke({});
+    REQUIRE( r.get_type() == any_function::capture_type<const double &>() );
+    REQUIRE( &r.get_value<const double &>() == &x );
 }
