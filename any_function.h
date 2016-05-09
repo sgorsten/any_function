@@ -67,14 +67,14 @@ public:
             std::is_volatile<typename std::remove_reference<T>::type>::value}; 
     }
 
-    struct result
+    struct result_base
     {
-        virtual ~result() {}
+        virtual ~result_base() {}
         virtual type get_type() const = 0;
         virtual void * get_address() = 0;     
     };
 
-    template<class T> struct typed_result : result
+    template<class T> struct typed_result : result_base
     {
         T x;
         typed_result(T x) : x(static_cast<T>(x)) {}
@@ -82,15 +82,17 @@ public:
         void * get_address() { return const_cast<typename std::remove_cv<typename std::remove_reference<T>::type>::type *>(&x); }
     };
 
-    struct wrapped_result
+    class result
     {
-        std::unique_ptr<result> p;
-        wrapped_result() {}
-        wrapped_result(wrapped_result && r) : p(move(r.p)) {}
-        wrapped_result(std::unique_ptr<result> && r) : p(move(r)) {}
-        wrapped_result & operator = (wrapped_result && r) { p.swap(r.p); return *this; }
+        std::unique_ptr<result_base> p;
+    public:
+        result() {}
+        result(result && r) : p(move(r.p)) {}
+        result(std::unique_ptr<result_base> && r) : p(move(r)) {}
+        result & operator = (result && r) { p.swap(r.p); return *this; }
 
         type get_type() const { return p ? p->get_type() : capture_type<void>(); }
+        void * get_address() { return p ? p->get_address() : nullptr; }
         template<class T> T get_value() { return get(p->get_address(), tag<T>{}); }
     };
 public:
@@ -99,21 +101,21 @@ public:
     template<std::size_t N, std::size_t... IS> struct       build_indices           : build_indices<N-1, N-1, IS...> {};
     template<std::size_t... IS> struct                      build_indices<0, IS...> : indices<IS...> {};
 
-    std::function<std::unique_ptr<result>(void * const *)>  func;
+    std::function<result(void * const *)>                   func;
     std::vector<type>                                       parameter_types;
     type                                                    return_type {};
    
     template<class T> static T                              get(void * arg, tag<T>   ) { return           *reinterpret_cast<T *>(arg);  }
     template<class T> static T &                            get(void * arg, tag<T &> ) { return           *reinterpret_cast<T *>(arg);  }
     template<class T> static T &&                           get(void * arg, tag<T &&>) { return std::move(*reinterpret_cast<T *>(arg)); }
-    template<class F, class R, class... A, size_t... I>     any_function(F f, tag<R   >, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<R   >()) { func = [f](void * const args[]) -> std::unique_ptr<result> { return std::unique_ptr<result>(new typed_result<R   >{f(get(args[I], tag<A>{})...)});        }; }
-    template<class F, class R, class... A, size_t... I>     any_function(F f, tag<R & >, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<R & >()) { func = [f](void * const args[]) -> std::unique_ptr<result> { return std::unique_ptr<result>(new typed_result<R & >{f(get(args[I], tag<A>{})...)});        }; }
-    template<class F, class R, class... A, size_t... I>     any_function(F f, tag<R &&>, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<R &&>()) { func = [f](void * const args[]) -> std::unique_ptr<result> { return std::unique_ptr<result>(new typed_result<R &&>{f(get(args[I], tag<A>{})...)});        }; }
-    template<class F,          class... A, size_t... I>     any_function(F f, tag<void>, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<void>()) { func = [f](void * const args[]) -> std::unique_ptr<result> { return                                                f(get(args[I], tag<A>{})...), nullptr; }; }
-    template<class F, class R                         >     any_function(F f, tag<R   >, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<R   >()) { func = [f](void * const args[]) -> std::unique_ptr<result> { return std::unique_ptr<result>(new typed_result<R   >{f(                         )});        }; }
-    template<class F, class R                         >     any_function(F f, tag<R & >, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<R & >()) { func = [f](void * const args[]) -> std::unique_ptr<result> { return std::unique_ptr<result>(new typed_result<R & >{f(                         )});        }; }
-    template<class F, class R                         >     any_function(F f, tag<R &&>, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<R &&>()) { func = [f](void * const args[]) -> std::unique_ptr<result> { return std::unique_ptr<result>(new typed_result<R &&>{f(                         )});        }; }
-    template<class F                                  >     any_function(F f, tag<void>, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<void>()) { func = [f](void * const args[]) -> std::unique_ptr<result> { return                                                f(                         ), nullptr; }; }
+    template<class F, class R, class... A, size_t... I>     any_function(F f, tag<R   >, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<R   >()) { func = [f](void * const args[]) -> result { return std::unique_ptr<result_base>(new typed_result<R   >{f(get(args[I], tag<A>{})...)});        }; }
+    template<class F, class R, class... A, size_t... I>     any_function(F f, tag<R & >, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<R & >()) { func = [f](void * const args[]) -> result { return std::unique_ptr<result_base>(new typed_result<R & >{f(get(args[I], tag<A>{})...)});        }; }
+    template<class F, class R, class... A, size_t... I>     any_function(F f, tag<R &&>, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<R &&>()) { func = [f](void * const args[]) -> result { return std::unique_ptr<result_base>(new typed_result<R &&>{f(get(args[I], tag<A>{})...)});        }; }
+    template<class F,          class... A, size_t... I>     any_function(F f, tag<void>, std::tuple<A...> *, indices<I...>) : parameter_types({capture_type<A>()...}), return_type(capture_type<void>()) { func = [f](void * const args[]) -> result { return                                                     f(get(args[I], tag<A>{})...), nullptr; }; }
+    template<class F, class R                         >     any_function(F f, tag<R   >, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<R   >()) { func = [f](void * const args[]) -> result { return std::unique_ptr<result_base>(new typed_result<R   >{f(                         )});        }; }
+    template<class F, class R                         >     any_function(F f, tag<R & >, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<R & >()) { func = [f](void * const args[]) -> result { return std::unique_ptr<result_base>(new typed_result<R & >{f(                         )});        }; }
+    template<class F, class R                         >     any_function(F f, tag<R &&>, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<R &&>()) { func = [f](void * const args[]) -> result { return std::unique_ptr<result_base>(new typed_result<R &&>{f(                         )});        }; }
+    template<class F                                  >     any_function(F f, tag<void>, std::tuple<    > *, indices<    >) : parameter_types({                    }), return_type(capture_type<void>()) { func = [f](void * const args[]) -> result { return                                                     f(                         ), nullptr; }; }
     template<class F, class R, class... A             >     any_function(F f, R (F::*p)(A...) const)                     : any_function(f, tag<R>{}, (std::tuple<A...>*)0, build_indices<sizeof...(A)>{}) {}
 public:
                                                             any_function()                                      {}
@@ -125,9 +127,9 @@ public:
     explicit                                                operator bool() const                               { return static_cast<bool>(func); }
     const std::vector<type> &                               get_parameter_types() const                         { return parameter_types; }
     const type &                                            get_return_type() const                             { return return_type; }
-    wrapped_result                                          invoke(void * const args[]) const                   { return {func(args)}; }
+    result                                                  invoke(void * const args[]) const                   { return func(args); }
 
-    wrapped_result                                          invoke(std::initializer_list<void *> args) const    { return invoke(args.begin()); }
+    result                                                  invoke(std::initializer_list<void *> args) const    { return invoke(args.begin()); }
 };
 
 #endif
