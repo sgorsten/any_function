@@ -1,8 +1,8 @@
-# WARNING: THIS LIBRARY IS UNFINISHED AND UNTESTED
+# WARNING: This library is still under development and its API and implementation details are subject to change.
 
 # any_function.h
 
-[![Release is 0.6](http://img.shields.io/badge/release-0.6-blue.svg?style=flat)](/any_function.h)
+[![Release is 0.7](http://img.shields.io/badge/release-0.7-blue.svg?style=flat)](/any_function.h)
 [![License is Unlicense](http://img.shields.io/badge/license-Unlicense-blue.svg?style=flat)](http://unlicense.org/)
 
 Platform | Build Status |
